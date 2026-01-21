@@ -109,3 +109,14 @@
   (+vhdl-common-config 'vhdl-ts-mode))
 
 
+;; ((_
+;;   target: (_)
+;;   "<=" @assignment)
+;;  (relation
+;;   (_)
+;;   operator: "<=" @greater_or_eq))
+
+
+;; =>
+;; ⇐=
+;; <==
