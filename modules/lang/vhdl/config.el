@@ -1,7 +1,6 @@
 ;;; lang/vhdl/config.el -*- lexical-binding: t; -*-
 
 ;; treesitter
-;; offset
 ;; formatter
 ;; lsp-mode and eglot
 ;;      language servers: TODO VHDL-tool, TODO HDL Checker, VHDL LS, and TODO GHDL LS
@@ -56,52 +55,56 @@
 (use-package! vhdl-mode
   :when (modulep! -tree-sitter)
   :mode ("\\.vhd\\'" "\\.vhdl\\'")
-  :hook
-  ;; Sync vhdl-mode's tab setting with standard indent-tabs-mode
-  (vhdl-mode . (lambda ()
-                 (setq-local vhdl-indent-tabs-mode indent-tabs-mode)
-                 (setq-local vhdl-basic-offset tab-width)))
   :init
+  :config
   (set-formatter! 'vhdl-beautify
     (lambda (&rest args)
       (let ((scratch (plist-get args :scratch))
-            (callback (plist-get args :callback)))
+            (callback (plist-get args :callback))
+            (original-buffer (plist-get args :buffer)))
         (with-current-buffer scratch
           (vhdl-mode)
+
+          (setq-local vhdl-basic-offset 
+                      (buffer-local-value 'vhdl-basic-offset original-buffer))
+          (setq-local tab-width 
+                      (buffer-local-value 'tab-width original-buffer))
+          (setq-local indent-tabs-mode 
+                      (buffer-local-value 'indent-tabs-mode original-buffer))
+          (setq-local vhdl-indent-tabs-mode 
+                      (buffer-local-value 'vhdl-indent-tabs-mode original-buffer))
+          
           (vhdl-beautify-buffer))
         (funcall callback nil)))
     :modes '(vhdl-mode))
-  :config
   (+vhdl-common-config 'vhdl-mode))
 
 (use-package! vhdl-ts-mode
   :when (modulep! +tree-sitter)
   :defer t
   :mode ("\\.vhd\\'" "\\.vhdl\\'")
-  :hook
-  (vhdl-ts-mode . (lambda ()
-                    (setq-local vhdl-ts-indent-level tab-width)))
   :init
   (set-tree-sitter! 'vhdl-mode 'vhdl-ts-mode 'vhdl)
-
+  :config
   (set-formatter! 'vhdl-ts-beautify
-    ;; Get a set of arguments form 'apheleia--run-formatter-function'
     (lambda (&rest args)
-      ;; Pick out the need
       (let ((scratch (plist-get args :scratch))
-            (callback (plist-get args :callback)))
-        ;; Use the given buffer
+            (callback (plist-get args :callback))
+            (original-buffer (plist-get args :buffer)))
         (with-current-buffer scratch
-          ;; Go into 'vhdl-ts-mode' (starts in 'fundamental-mode')
           (vhdl-ts-mode)
-          ;; beautify
+
+          (setq-local vhdl-ts-indent-level 
+                      (buffer-local-value 'vhdl-ts-indent-level original-buffer))
+          (setq-local tab-width 
+                      (buffer-local-value 'tab-width original-buffer))
+          (setq-local indent-tabs-mode 
+                      (buffer-local-value 'indent-tabs-mode original-buffer))
+
           (vhdl-ts-beautify-buffer))
-        ;; return with nil errors
         (funcall callback nil)))
-    ;; This only works in 'vhdl-ts-mode'
     :modes '(vhdl-ts-mode))
   
-  :config
   ;; install tree-sitter grammar unless avaliable
   (unless (treesit-language-available-p 'vhdl)
     (vhdl-ts-install-grammar))
